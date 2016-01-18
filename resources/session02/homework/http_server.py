@@ -8,7 +8,7 @@ def response_ok(body, mimetype):
     """returns a basic HTTP response"""
     resp = []
     resp.append(b"HTTP/1.1 200 OK")
-    resp.append(b"Content-Type: " + mimetype)  # couldn't format byte string
+    resp.append(b"Content-Type: " + mimetype)  # couldn't call format() on byte string
     resp.append(b"")
     resp.append(body)
     return b"\r\n".join(resp)
@@ -38,18 +38,16 @@ def parse_request(request):
     return uri
 
 
-# this is working, move to next step of homework
 def resolve_uri(uri):
     """This method should return appropriate content and a mime type"""
     path = pathlib.Path('webroot{}'.format(uri))
-    if path.exists() and path.is_dir():
+    if path.is_dir():
         resources = [item.name.encode('utf8') for item in path.iterdir()]
         contents = b'\r\n'.join(resources)
         mime_type = b'text/plain'
-    elif path.exists() and path.is_file():
+    elif path.is_file():
         contents = path.read_bytes()
         mime_type = mimetypes.guess_type(uri)[0].encode('utf8')
-        # mime_type = mimetypes.types_map(uri).encode('utf8')
     else:
         raise NameError('No such file or directory. Please try again.')
     return contents, mime_type
