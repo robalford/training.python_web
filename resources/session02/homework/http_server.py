@@ -1,14 +1,16 @@
 import socket
 import sys
+import pathlib
+import mimetypes
 
 
-def response_ok(body=b"this is a pretty minimal response", mimetype=b"text/plain"):
+def response_ok(body, mimetype):
     """returns a basic HTTP response"""
     resp = []
     resp.append(b"HTTP/1.1 200 OK")
-    resp.append(b"Content-Type: text/plain")
+    resp.append(b"Content-Type: " + mimetype)  # couldn't format byte string
     resp.append(b"")
-    resp.append(b"this is a pretty minimal response")
+    resp.append(body)
     return b"\r\n".join(resp)
 
 
@@ -22,7 +24,10 @@ def response_method_not_allowed():
 
 def response_not_found():
     """returns a 404 Not Found response"""
-    return b""
+    resp = []
+    resp.append("HTTP/1.1 404 Not Found")
+    resp.append("")
+    return "\r\n".join(resp).encode('utf8')
 
 
 def parse_request(request):
@@ -33,9 +38,21 @@ def parse_request(request):
     return uri
 
 
+# this is working, move to next step of homework
 def resolve_uri(uri):
     """This method should return appropriate content and a mime type"""
-    return b"still broken", b"text/plain"
+    path = pathlib.Path('webroot{}'.format(uri))
+    if path.exists() and path.is_dir():
+        resources = [item.name.encode('utf8') for item in path.iterdir()]
+        contents = b'\r\n'.join(resources)
+        mime_type = b'text/plain'
+    elif path.exists() and path.is_file():
+        contents = path.read_bytes()
+        mime_type = mimetypes.guess_type(uri)[0].encode('utf8')
+        # mime_type = mimetypes.types_map(uri).encode('utf8')
+    else:
+        raise NameError('No such file or directory. Please try again.')
+    return contents, mime_type
 
 
 def server(log_buffer=sys.stderr):
