@@ -22,12 +22,6 @@ def footer():
     return footer
 
 
-def html_doc(body):
-    head = header()
-    foot = footer()
-    return head + body + foot
-
-
 def calculator():
     calculator = """
 <form>
@@ -49,6 +43,12 @@ def calculate(num1, op_str, num2):
     return calculation.format(num1, op_str, num2, result)
 
 
+def html_doc(doc_body):
+    doc_header = header()
+    doc_footer = footer()
+    return doc_header + doc_body + doc_footer
+
+
 def resolve_path(path):
     urls = [(r'^$', calculator),
             (r'^([\d]+)(\+|\-|\*|\/)([\d]+)$', calculate)]
@@ -66,28 +66,28 @@ def resolve_path(path):
 def application(environ, start_response):
     headers = [("Content-type", "text/html")]
     try:
-        path = environ.get('PATH_INFO', None)
+        request = environ.get('PATH_INFO', None)
         qs = environ.get('QUERY_STRING', None)
-        if path is None:
+        if request is None:
             raise NameError
         if qs:
-            qsl = parse_qsl(qs)  # urllib function to convert query string to list
-            path = qsl[0][1].replace(' ', '')  # grab the calculation value, strip whitespace and store it in path
-        func, args = resolve_path(path)
+            qsl = parse_qsl(qs)  # urllib function to convert query string to list of keys and values
+            request = qsl[0][1].replace(' ', '')  # grab the calculation from the query string, strip whitespace and store it in request
+        func, args = resolve_path(request)
         body = func(*args)
         status = "200 OK"
     except NameError:
-        status = "404 Not Found"
-        body = """<h1>Not Found</h1>
-        <a href='/'>Make another calculation.</a>"""  # DRY
+        status = "400 Bad Request"
+        body = """<h1>Please re-enter your calculation using only digits and the following operands: +, -, *, /. Thanks!</h1>
+        <a href='/'>Try another calculation.</a>"""
     except ZeroDivisionError:
         status = "400 Bad Request"
         body = """<h1>You can't divide by zero!</h1>
-        <a href='/'>Make another calculation.</a>"""
+        <a href='/'>Let's try something more reasonable.</a>"""
     except Exception:
         status = "500 Internal Server Error"
-        body = """<h1>Internal Server Error</h1>
-        <a href='/'>Make another calculation.</a>"""
+        body = """<h1>Something bad has happened, but it's not your fault. Sorry.</h1>
+        <a href='/'>Give us another chance.</a>"""
     finally:
         html = html_doc(body)
         headers.append(('Content-length', str(len(html))))
