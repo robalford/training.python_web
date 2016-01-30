@@ -119,7 +119,7 @@ def get_score_data(elem):
     return data
 
 
-def result_generator(count):
+def result_generator(count, sort_by, sort_order):
     use_params = {
         'Inspection_Start': '2/1/2013',
         'Inspection_End': '2/1/2015',
@@ -130,11 +130,19 @@ def result_generator(count):
     parsed = parse_source(html)
     content_col = parsed.find("td", id="contentcol")
     data_list = restaurant_data_generator(content_col)
-    for data_div in data_list[:count]:
+    restaurant_list = []
+    # for data_div in data_list[:count]:
+    for data_div in data_list:
         metadata = extract_restaurant_metadata(data_div)
         inspection_data = get_score_data(data_div)
         metadata.update(inspection_data)
-        yield metadata
+        restaurant_list.append(metadata)
+    if sort_by:
+        restaurant_list = sorted(restaurant_list,
+                                 key=lambda k: k[sort_by],
+                                 reverse=sort_order)
+    for restaurant in restaurant_list[:count]:
+        yield restaurant
 
 
 def get_geojson(result):
@@ -189,18 +197,19 @@ def get_count(args):
 if __name__ == '__main__':
     total_result = {'type': 'FeatureCollection', 'features': []}
     # get command line arguments for sorting, limiting and ordering results
+    # explore argparse or click for better command line interface
     args = sys.argv[1:]
     count = get_count(args)
     sort_by = sort_by(args)
     sort_order = sort_order(args)
-    for result in result_generator(count):
+    for result in result_generator(count, sort_by, sort_order):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
     # sort and order results based on command line args
-    if sort_by:
-        total_result['features'] = sorted(total_result['features'],
-                                          key=lambda k: k['properties'][sort_by],
-                                          reverse=sort_order)
-    # pprint(total_result)
-    with open('my_map.json', 'w') as fh:
-        json.dump(total_result, fh)
+    # if sort_by:
+    #     total_result['features'] = sorted(total_result['features'],
+    #                                       key=lambda k: k['properties'][sort_by],
+    #                                       reverse=sort_order)
+    pprint(total_result)
+    # with open('my_map.json', 'w') as fh:
+    #     json.dump(total_result, fh)
