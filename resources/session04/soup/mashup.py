@@ -198,9 +198,9 @@ if __name__ == '__main__':
         total_result['features'].append(geojson)
     # sort and order results based on command line args
     if sort_by:
-        sorted_result = sorted(total_result['features'],
-                               key=lambda k: k['properties'][sort_by],
-                               reverse=sort_order)
-    pprint(sorted_result)
-    # with open('my_map.json', 'w') as fh:
-    #     json.dump(total_result, fh)
+        total_result['features'] = sorted(total_result['features'],
+                                          key=lambda k: k['properties'][sort_by],
+                                          reverse=sort_order)
+    # pprint(total_result)
+    with open('my_map.json', 'w') as fh:
+        json.dump(total_result, fh)
