@@ -156,27 +156,51 @@ def get_geojson(result):
     geojson['properties'] = inspection_data
     return geojson
 
+
+# functions for dealing with command line args
+def sort_order(args):
+    if 'reverse' not in args:
+        return True
+    else:
+        return False
+
+
+def sort_by(args):
+    sort_by = {
+        'highscore': 'High Score',
+        'averagescore': 'Average Score',
+        'mostinspections': 'Total Inspections',
+    }
+    for order in sort_by:
+        if order in args:
+            return sort_by[order]
+
+
+def get_count(args):
+    for arg in args:
+        try:
+            arg = int(arg)
+            return arg
+        except ValueError:
+            continue
+    return 10
+
+
 if __name__ == '__main__':
     total_result = {'type': 'FeatureCollection', 'features': []}
-    # allow user to select number of results. use argparse to clean this up?
-    num_results = int(sys.argv[2]) if sys.argv[2] else 10
-    for result in result_generator(num_results):
+    # get command line arguments for sorting, limiting and ordering results
+    args = sys.argv[1:]
+    count = get_count(args)
+    sort_by = sort_by(args)
+    sort_order = sort_order(args)
+    for result in result_generator(count):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
-    # sort results by average score, high score or most inspections.
-    # explore argparse to make this all work better, with instructions, exceptions etc.
-    if sys.argv[1] == 'highscore':
+    # sort and order results based on command line args
+    if sort_by:
         sorted_result = sorted(total_result['features'],
-                               key=lambda k: k['properties']['High Score'],
-                               reverse=True)
-    elif sys.argv[1] == 'average':
-        sorted_result = sorted(total_result['features'],
-                               key=lambda k: k['properties']['Average Score'],
-                               reverse=True)
-    elif sys.argv[1] == 'most':
-        sorted_result = sorted(total_result['features'],
-                               key=lambda k: k['properties']['Total Inspections'],
-                               reverse=True)
+                               key=lambda k: k['properties'][sort_by],
+                               reverse=sort_order)
     pprint(sorted_result)
     # with open('my_map.json', 'w') as fh:
     #     json.dump(total_result, fh)
