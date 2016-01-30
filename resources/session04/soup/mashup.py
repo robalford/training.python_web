@@ -156,13 +156,15 @@ def get_geojson(result):
     geojson['properties'] = inspection_data
     return geojson
 
-
 if __name__ == '__main__':
     total_result = {'type': 'FeatureCollection', 'features': []}
-    for result in result_generator(10):
+    # allow user to select number of results. use argparse to clean this up?
+    num_results = int(sys.argv[2]) if sys.argv[2] else 10
+    for result in result_generator(num_results):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
-    # sort results by average score, from highest to lowest
+    # sort results by average score, high score or most inspections.
+    # explore argparse to make this all work better, with instructions, exceptions etc.
     if sys.argv[1] == 'highscore':
         sorted_result = sorted(total_result['features'],
                                key=lambda k: k['properties']['High Score'],
