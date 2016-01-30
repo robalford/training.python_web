@@ -160,5 +160,10 @@ if __name__ == '__main__':
     for result in result_generator(10):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
-    with open('my_map.json', 'w') as fh:
-        json.dump(total_result, fh)
+    # sort results by average score, from highest to lowest
+    sorted_result = sorted(total_result['features'],
+                           key=lambda k: k['properties']['Average Score'],
+                           reverse=True)
+    import pdb; pdb.set_trace()
+    # with open('my_map.json', 'w') as fh:
+    #     json.dump(total_result, fh)
