@@ -1,3 +1,5 @@
+import sys
+from pprint import pprint
 from bs4 import BeautifulSoup
 import geocoder
 import json
@@ -161,9 +163,18 @@ if __name__ == '__main__':
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
     # sort results by average score, from highest to lowest
-    sorted_result = sorted(total_result['features'],
-                           key=lambda k: k['properties']['Average Score'],
-                           reverse=True)
-    import pdb; pdb.set_trace()
+    if sys.argv[1] == 'highscore':
+        sorted_result = sorted(total_result['features'],
+                               key=lambda k: k['properties']['High Score'],
+                               reverse=True)
+    elif sys.argv[1] == 'average':
+        sorted_result = sorted(total_result['features'],
+                               key=lambda k: k['properties']['Average Score'],
+                               reverse=True)
+    elif sys.argv[1] == 'most':
+        sorted_result = sorted(total_result['features'],
+                               key=lambda k: k['properties']['Total Inspections'],
+                               reverse=True)
+    pprint(sorted_result)
     # with open('my_map.json', 'w') as fh:
     #     json.dump(total_result, fh)
