@@ -119,6 +119,19 @@ def get_score_data(elem):
     return data
 
 
+def set_marker_color(inspection_data):
+    # set marker color based on average score.
+    # green = go, yellow = proceed with caution, red = stop
+    # need to make this work for other sorting values too
+    if inspection_data['Average Score'] >= 50:
+        inspection_data['marker-color'] = '#00ff00'
+    elif 50 >= inspection_data['Average Score'] >= 35:
+        inspection_data['marker-color'] = '#ffff00'
+    elif inspection_data['Average Score'] <= 35:
+        inspection_data['marker-color'] = '#ff0000'
+    return inspection_data
+
+
 def result_generator(count, sort_by, sort_order):
     use_params = {
         'Inspection_Start': '2/1/2013',
@@ -153,7 +166,11 @@ def get_geojson(result):
     geojson = geocoded.geojson
     inspection_data = {}
     use_keys = (
-        'Business Name', 'Average Score', 'Total Inspections', 'High Score'
+        'marker-color',
+        'Business Name',
+        'Average Score',
+        'Total Inspections',
+        'High Score'
     )
     for key, val in result.items():
         if key not in use_keys:
@@ -161,6 +178,9 @@ def get_geojson(result):
         if isinstance(val, list):
             val = " ".join(val)
         inspection_data[key] = val
+    # use your function above to set marker color property based on avg. score
+    # adjust to use other sorting criteria
+    inspection_data = set_marker_color(inspection_data)
     geojson['properties'] = inspection_data
     return geojson
 
@@ -210,6 +230,6 @@ if __name__ == '__main__':
     #     total_result['features'] = sorted(total_result['features'],
     #                                       key=lambda k: k['properties'][sort_by],
     #                                       reverse=sort_order)
-    pprint(total_result)
-    # with open('my_map.json', 'w') as fh:
-    #     json.dump(total_result, fh)
+    # pprint(total_result)
+    with open('my_map.json', 'w') as fh:
+        json.dump(total_result, fh)
