@@ -119,19 +119,6 @@ def get_score_data(elem):
     return data
 
 
-def set_marker_color(inspection_data):
-    # set marker color based on average score.
-    # green = go, yellow = proceed with caution, red = stop
-    # need to make this work for other sorting values too
-    if inspection_data['Average Score'] >= 50:
-        inspection_data['marker-color'] = '#00ff00'
-    elif 50 >= inspection_data['Average Score'] >= 35:
-        inspection_data['marker-color'] = '#ffff00'
-    elif inspection_data['Average Score'] <= 35:
-        inspection_data['marker-color'] = '#ff0000'
-    return inspection_data
-
-
 def result_generator(count, sort_by, sort_order):
     use_params = {
         'Inspection_Start': '2/1/2013',
@@ -180,7 +167,7 @@ def get_geojson(result):
         inspection_data[key] = val
     # use your function above to set marker color property based on avg. score
     # adjust to use other sorting criteria
-    inspection_data = set_marker_color(inspection_data)
+    # inspection_data = set_marker_color(inspection_data)
     geojson['properties'] = inspection_data
     return geojson
 
@@ -214,6 +201,18 @@ def get_count(args):
     return 10
 
 
+def set_marker_color(sort_by, results):
+    # calculate the average score for this sample size and sorting criteria
+    # need to find average of result set for more useful color coding
+    for result in results:
+        if result['properties'][sort_by] >= 66:
+            result['properties']['marker-color'] = '#00ff00'
+        elif result['properties'][sort_by] <= 33:
+            result['properties']['marker-color'] = '#ffff00'
+        else:
+            result['properties']['marker-color'] = '#ff0000'
+    return results
+
 if __name__ == '__main__':
     total_result = {'type': 'FeatureCollection', 'features': []}
     # get command line arguments for sorting, limiting and ordering results
@@ -225,11 +224,7 @@ if __name__ == '__main__':
     for result in result_generator(count, sort_by, sort_order):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
-    # sort and order results based on command line args
-    # if sort_by:
-    #     total_result['features'] = sorted(total_result['features'],
-    #                                       key=lambda k: k['properties'][sort_by],
-    #                                       reverse=sort_order)
-    # pprint(total_result)
+    # set marker-color property for result set based on sorting criteria
+    total_result['features'] = set_marker_color(sort_by, total_result['features'])
     with open('my_map.json', 'w') as fh:
         json.dump(total_result, fh)
