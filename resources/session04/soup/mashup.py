@@ -1,11 +1,12 @@
 import sys
-from pprint import pprint
+from pprint import pprint  # used for debugging
 from bs4 import BeautifulSoup
 import geocoder
 import json
 import pathlib
 import re
 import requests
+import click
 
 
 INSPECTION_DOMAIN = 'http://info.kingcounty.gov'
@@ -119,7 +120,7 @@ def get_score_data(elem):
     return data
 
 
-def result_generator(count, sort_by, sort_order):
+def result_generator(sort_by, low_to_high, count):
     use_params = {
         'Inspection_Start': '2/1/2013',
         'Inspection_End': '2/1/2015',
@@ -139,7 +140,7 @@ def result_generator(count, sort_by, sort_order):
     if sort_by:
         restaurant_list = sorted(restaurant_list,
                                  key=lambda k: k[sort_by],
-                                 reverse=sort_order)
+                                 reverse=low_to_high)
     for restaurant in restaurant_list[:count]:
         yield restaurant
 
@@ -169,32 +170,32 @@ def get_geojson(result):
 
 
 # functions for dealing with command line args
-def sort_order(args):
-    if 'reverse' not in args:
-        return True
-    else:
-        return False
+# def sort_order(args):
+#     if 'reverse' not in args:
+#         return True
+#     else:
+#         return False
 
 
-def sort_by(args):
-    sort_by = {
-        'highscore': 'High Score',
-        'averagescore': 'Average Score',
-        'mostinspections': 'Total Inspections',
-    }
-    for order in sort_by:
-        if order in args:
-            return sort_by[order]
+# def sorter(args):
+#     sort_by = {
+#         'highscore': 'High Score',
+#         'averagescore': 'Average Score',
+#         'mostinspections': 'Total Inspections',
+#     }
+#     for order in sort_by:
+#         if order in args:
+#             return sort_by[order]
 
 
-def get_count(args):
-    for arg in args:
-        try:
-            arg = int(arg)
-            return arg
-        except ValueError:
-            continue
-    return 10
+# def get_count(args):
+#     for arg in args:
+#         try:
+#             arg = int(arg)
+#             return arg
+#         except ValueError:
+#             continue
+#     return 10
 
 
 def set_marker_color(sort_by, results):
@@ -212,18 +213,43 @@ def set_marker_color(sort_by, results):
             result['properties']['marker-color'] = '#ffff00'
     return results
 
-if __name__ == '__main__':
+
+@click.command()
+@click.option('--sort-by',
+              type=click.Choice(['Average Score', 'High Score', 'Total Inspections']),
+              prompt=True,
+              help='Sorting options: averagescore, highscore, mostinspections')
+@click.option('--low-to-high', is_flag=True, default=True)
+@click.option('--count', default=10, prompt=True)
+def save_results(sort_by, low_to_high, count):
     total_result = {'type': 'FeatureCollection', 'features': []}
     # get command line arguments for sorting, limiting and ordering results
     # explore argparse or click for better command line interface
-    args = sys.argv[1:]
-    count = get_count(args)
-    sort_by = sort_by(args)
-    sort_order = sort_order(args)
-    for result in result_generator(count, sort_by, sort_order):
+    # args = sys.argv[1:]
+    # count = get_count(args)
+    # sort_by = sorter(sort_by)
+    # sort_order = sort_order(args)
+    for result in result_generator(sort_by, low_to_high, count):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
     # set marker-color property for result set based on sorting criteria
     total_result['features'] = set_marker_color(sort_by, total_result['features'])
     with open('my_map.json', 'w') as fh:
         json.dump(total_result, fh)
+
+if __name__ == '__main__':
+    save_results()
+    # total_result = {'type': 'FeatureCollection', 'features': []}
+    # # get command line arguments for sorting, limiting and ordering results
+    # # explore argparse or click for better command line interface
+    # args = sys.argv[1:]
+    # count = get_count(args)
+    # sort_by = sort_by(args)
+    # sort_order = sort_order(args)
+    # for result in result_generator(count, sort_by, sort_order):
+    #     geojson = get_geojson(result)
+    #     total_result['features'].append(geojson)
+    # # set marker-color property for result set based on sorting criteria
+    # total_result['features'] = set_marker_color(sort_by, total_result['features'])
+    # with open('my_map.json', 'w') as fh:
+    #     json.dump(total_result, fh)
