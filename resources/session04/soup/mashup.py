@@ -131,7 +131,6 @@ def result_generator(count, sort_by, sort_order):
     content_col = parsed.find("td", id="contentcol")
     data_list = restaurant_data_generator(content_col)
     restaurant_list = []
-    # for data_div in data_list[:count]:
     for data_div in data_list:
         metadata = extract_restaurant_metadata(data_div)
         inspection_data = get_score_data(data_div)
@@ -165,9 +164,6 @@ def get_geojson(result):
         if isinstance(val, list):
             val = " ".join(val)
         inspection_data[key] = val
-    # use your function above to set marker color property based on avg. score
-    # adjust to use other sorting criteria
-    # inspection_data = set_marker_color(inspection_data)
     geojson['properties'] = inspection_data
     return geojson
 
@@ -203,14 +199,17 @@ def get_count(args):
 
 def set_marker_color(sort_by, results):
     # calculate the average score for this sample size and sorting criteria
-    # need to find average of result set for more useful color coding
+    scores = [result['properties'][sort_by] for result in results]
+    avg_score = sum(scores)/len(scores)
+    # set marker-color property for results based on relationship to avg. score
+    # green=go, yellow=proceed with caution, red=stop
     for result in results:
-        if result['properties'][sort_by] >= 66:
+        if result['properties'][sort_by] >= (avg_score+5):
             result['properties']['marker-color'] = '#00ff00'
-        elif result['properties'][sort_by] <= 33:
-            result['properties']['marker-color'] = '#ffff00'
-        else:
+        elif result['properties'][sort_by] <= (avg_score-5):
             result['properties']['marker-color'] = '#ff0000'
+        else:
+            result['properties']['marker-color'] = '#ffff00'
     return results
 
 if __name__ == '__main__':
