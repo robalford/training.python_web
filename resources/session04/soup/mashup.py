@@ -205,8 +205,13 @@ def save_results(sort_by, high_to_low, count):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
     total_result['features'] = set_marker_color(sort_by, total_result['features'])
-    with open('my_map.json', 'w') as fh:
-        json.dump(total_result, fh)
+    # open map in geojson.io with your data
+    map_url = 'http://geojson.io/#data=data:application/json,'
+    escaped_geojson = urllib.parse.quote(json.dumps(total_result))  # use json to convert dict to string for escaping
+    geojson_url = map_url + escaped_geojson
+    webbrowser.open(geojson_url)
+    # with open('my_map.json', 'w') as fh:
+    #     json.dump(total_result, fh)
 
 if __name__ == '__main__':
     save_results()
