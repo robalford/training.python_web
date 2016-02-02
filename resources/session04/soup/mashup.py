@@ -187,6 +187,14 @@ def set_marker_color(sort_by, results):
     return results
 
 
+def open_map(total_result):
+    # open map in geojson.io with your data
+    map_url = 'http://geojson.io/#data=data:application/json,'
+    escaped_geojson = urllib.parse.quote(json.dumps(total_result))  # use json to convert dict to string for escaping
+    geojson_url = map_url + escaped_geojson
+    webbrowser.open(geojson_url)
+
+
 @click.command()
 @click.option('--sort-by',
               type=click.Choice(['Average Score', 'High Score', 'Total Inspections']),
@@ -199,19 +207,15 @@ def set_marker_color(sort_by, results):
               default=10,
               prompt=True,
               help='Select number of results.')
-def save_results(sort_by, high_to_low, count):
+def display_results(sort_by, high_to_low, count):
     total_result = {'type': 'FeatureCollection', 'features': []}
     for result in result_generator(sort_by, high_to_low, count):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
     total_result['features'] = set_marker_color(sort_by, total_result['features'])
-    # open map in geojson.io with your data
-    map_url = 'http://geojson.io/#data=data:application/json,'
-    escaped_geojson = urllib.parse.quote(json.dumps(total_result))  # use json to convert dict to string for escaping
-    geojson_url = map_url + escaped_geojson
-    webbrowser.open(geojson_url)
     # with open('my_map.json', 'w') as fh:
     #     json.dump(total_result, fh)
+    open_map(total_result)
 
 if __name__ == '__main__':
-    save_results()
+    display_results()
