@@ -208,6 +208,7 @@ def open_map(total_result):
               prompt=True,
               help='Select number of results.')
 def display_results(sort_by, high_to_low, count):
+    """A program to display the results of restaurant health inspections on a map."""
     total_result = {'type': 'FeatureCollection', 'features': []}
     for result in result_generator(sort_by, high_to_low, count):
         geojson = get_geojson(result)
